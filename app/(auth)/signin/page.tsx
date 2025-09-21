@@ -45,44 +45,59 @@ export default function SigninPage() {
 
       {/* Sign-in Form */}
       <form
-  onSubmit={handleSignin}
-  className="relative z-10 bg-white/5 backdrop-blur-md border border-cyan-400/30 p-6 sm:p-8 rounded-xl shadow-lg w-[90%] max-w-md text-white"
->
-  <h1 className="text-3xl font-bold mb-6 text-center text-cyan-300">Sign In</h1>
+        onSubmit={handleSignin}
+        className="relative z-10 bg-white/5 backdrop-blur-md border border-cyan-400/30 p-6 sm:p-8 rounded-xl shadow-lg w-[90%] max-w-md text-white animate-fade-in"
+      >
+        <h1 className="text-3xl font-bold mb-2 text-center text-cyan-300">
+          Sign In
+        </h1>
+        <p className="text-md text-gray-400 text-center mb-6">
+          Welcome back! Log in to access your dashboard
+        </p>
 
-  {error && (
-    <p className="text-red-400 mb-4 text-sm text-center">{error}</p>
-  )}
+        {error && (
+          <p className="text-red-400 mb-4 text-sm text-center">{error}</p>
+        )}
 
-  <div className="space-y-4">
-    <input
-      type="email"
-      placeholder="Email"
-      className="w-full px-4 py-2 rounded-md bg-white/10 border border-white/20 placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
-      value={email}
-      onChange={(e) => setEmail(e.target.value)}
-      required
-    />
+        <div className="space-y-4">
+          <input
+            type="email"
+            placeholder="Email"
+            className="w-full px-4 py-2 rounded-md bg-white/10 border border-white/20 placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-    <input
-      type="password"
-      placeholder="Password"
-      className="w-full px-4 py-2 rounded-md bg-white/10 border border-white/20 placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
-      value={password}
-      onChange={(e) => setPassword(e.target.value)}
-      required
-    />
-  </div>
+          <input
+            type="password"
+            placeholder="Password"
+            className="w-full px-4 py-2 rounded-md bg-white/10 border border-white/20 placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
 
-  <button
-    type="submit"
-    className="mt-6 w-full bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-2 rounded-md transition disabled:opacity-50"
-    disabled={loading}
-  >
-    {loading ? "Signing in..." : "Sign In"}
-  </button>
-</form>
+        <button
+          type="submit"
+          className="mt-6 w-full bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-2 rounded-md transition disabled:opacity-50"
+          disabled={loading}
+        >
+          {loading ? "Signing in..." : "Sign In"}
+        </button>
 
+        {/* Extra Links */}
+        <div className="mt-6 flex justify-center">
+          <button
+            type="button"
+            onClick={() => router.push("/signup")}
+            className="text-md text-cyan-400 hover:underline text-center"
+          >
+            New user? Create an account
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

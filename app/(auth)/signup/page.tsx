@@ -46,13 +46,14 @@ export default function SignupPage() {
       {/* Signup Form */}
       <form
         onSubmit={handleSignup}
-        className="relative z-10 bg-white/5 backdrop-blur-md border border-cyan-400/30 p-6 sm:p-8 rounded-xl shadow-lg w-[90%] max-w-md text-white"
+        className="relative z-10 bg-white/5 backdrop-blur-md border border-cyan-400/30 p-6 sm:p-8 rounded-xl shadow-lg w-[90%] max-w-md text-white animate-fade-in"
       >
-        <h1 className="text-3xl font-bold mb-6 text-center text-cyan-300">Sign Up</h1>
+        <h1 className="text-3xl font-bold mb-2 text-center text-cyan-300">Sign Up</h1>
+        <p className="text-md text-gray-400 text-center mb-6">
+          Create your account to start scheduling study blocks
+        </p>
 
-        {error && (
-          <p className="text-red-400 mb-4 text-sm text-center">{error}</p>
-        )}
+        {error && <p className="text-red-400 mb-4 text-sm text-center">{error}</p>}
 
         <div className="space-y-4">
           <input
@@ -81,6 +82,18 @@ export default function SignupPage() {
         >
           {loading ? "Signing up..." : "Sign Up"}
         </button>
+
+        {/* Extra Links */}
+        <p className="mt-6 text-md text-center text-gray-400">
+          Already have an account?{" "}
+          <button
+            type="button"
+            onClick={() => router.push("/signin")}
+            className="text-cyan-400 hover:underline"
+          >
+            Sign In
+          </button>
+        </p>
       </form>
     </div>
   );

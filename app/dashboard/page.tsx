@@ -1,212 +1,349 @@
 "use client";
+import React, { useState, useEffect } from "react";
+import {
+  BookOpen,
+  Clock,
+  Calendar,
+  Plus,
+  Trash2,
+  LogOut,
+  CheckCircle2,
+  AlertCircle,
+  Timer,
+  GraduationCap,
+  BarChart3,
+  Settings,
+  Bell,
+  Play,
+} from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
-import CreateBlockModal from "@/components/CreateBlockModal";
+// Supabase client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
-type StudyBlock = {
-  _id: string;
-  startTime: string;
-  endTime: string;
-  reminderSent: boolean;
+// ---------------------
+// Study Block Card
+// ---------------------
+const StudyBlockCard = ({ block, onDelete }: any) => {
+  const startTime = new Date(block.startTime);
+  const endTime = new Date(block.endTime);
+  const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
+  const isUpcoming = startTime > new Date();
+  const isActive = new Date() >= startTime && new Date() <= endTime;
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "bg-red-500/10 border-red-500/20 text-red-400";
+      case "medium":
+        return "bg-yellow-500/10 border-yellow-500/20 text-yellow-400";
+      case "low":
+        return "bg-green-500/10 border-green-500/20 text-green-400";
+      default:
+        return "bg-cyan-500/10 border-cyan-500/20 text-cyan-400";
+    }
+  };
+
+  const getSubjectIcon = (subject: string) => {
+    switch (subject) {
+      case "Mathematics":
+        return <BarChart3 className="h-4 w-4" />;
+      case "Physics":
+        return <Timer className="h-4 w-4" />;
+      case "Literature":
+      case "History":
+        return <BookOpen className="h-4 w-4" />;
+      default:
+        return <GraduationCap className="h-4 w-4" />;
+    }
+  };
+
+  const handleDelete = async () => {
+    if (confirm(`Are you sure you want to delete "${block.title}"?`)) {
+      onDelete(block._id);
+    }
+  };
+
+  return (
+    <div
+      className={`group relative p-6 rounded-2xl border transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
+        isActive
+          ? "bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border-cyan-400/40 shadow-lg shadow-cyan-500/20"
+          : "bg-white/5 border-white/10 hover:bg-white/8 hover:border-white/20"
+      }`}
+    >
+      {isActive && (
+        <div className="absolute -top-2 -right-2">
+          <div className="bg-cyan-400 text-gray-900 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+            <Play className="h-3 w-3" />
+            ACTIVE
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start gap-3">
+          <div className={`p-2 rounded-lg ${getPriorityColor(block.priority)}`}>
+            {getSubjectIcon(block.subject)}
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-white mb-1 group-hover:text-cyan-300 transition-colors">
+              {block.title}
+            </h3>
+            {block.description && (
+              <p className="text-sm text-gray-400 mb-2">{block.description}</p>
+            )}
+            <div className="flex items-center gap-2 text-xs">
+              <span
+                className={`px-2 py-1 rounded-full font-medium capitalize ${getPriorityColor(
+                  block.priority
+                )}`}
+              >
+                {block.priority} priority
+              </span>
+              <span className="text-gray-500">•</span>
+              <span className="text-gray-400">{block.subject}</span>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={handleDelete}
+          className="opacity-0 group-hover:opacity-100 p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/40 transition-all duration-200"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="flex items-center gap-2 text-sm">
+          <Calendar className="h-4 w-4 text-cyan-400" />
+          <span className="text-gray-300">{startTime.toLocaleDateString()}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <Clock className="h-4 w-4 text-cyan-400" />
+          <span className="text-gray-300">
+            {startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <Timer className="h-4 w-4 text-cyan-400" />
+          <span className="text-gray-300">{duration} min</span>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {block.reminderSent ? (
+            <div className="flex items-center gap-1 text-green-400 text-sm">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Reminder sent</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 text-yellow-400 text-sm">
+              <Bell className="h-4 w-4" />
+              <span>Reminder pending</span>
+            </div>
+          )}
+        </div>
+
+        {isUpcoming && (
+          <div className="text-xs text-gray-400">
+            Starts in {Math.ceil((startTime.getTime() - Date.now()) / (1000 * 60 * 60))}h
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
+// ---------------------
+// Stats Card
+// ---------------------
+const StatsCard = ({ icon, label, value, trend, color = "cyan" }: any) => {
+  const colorClasses: any = {
+    cyan: "bg-cyan-500/10 border-cyan-500/20 text-cyan-400",
+    green: "bg-green-500/10 border-green-500/20 text-green-400",
+    yellow: "bg-yellow-500/10 border-yellow-500/20 text-yellow-400",
+    purple: "bg-purple-500/10 border-purple-500/20 text-purple-400",
+  };
+
+  return (
+    <div
+      className={`p-4 rounded-xl border ${colorClasses[color]} bg-white/5 hover:bg-white/8 transition-colors`}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className={`p-2 rounded-lg ${colorClasses[color]}`}>{icon}</div>
+        {trend && (
+          <span className={`text-xs px-2 py-1 rounded-full ${colorClasses[color]}`}>
+            {trend}
+          </span>
+        )}
+      </div>
+      <div>
+        <p className="text-2xl font-bold text-white mb-1">{value}</p>
+        <p className="text-sm text-gray-400">{label}</p>
+      </div>
+    </div>
+  );
+};
+
+// ---------------------
+// Dashboard Page
+// ---------------------
 export default function DashboardPage() {
-  const router = useRouter();
-  const [blocks, setBlocks] = useState<StudyBlock[]>([]);
+  const [blocks, setBlocks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // ✅ Check user session
   useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        router.push("/signin");
-      }
-    };
-    checkUser();
-  }, [router]);
+    checkAuth();
+  }, []);
 
-  const handleDelete = async (id: string) => {
-  try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+  useEffect(() => {
+    if (user) fetchBlocks();
+  }, [user]);
 
-    if (!session?.access_token) {
-      router.push("/signin");
+  const checkAuth = async () => {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) {
+      setError("Please sign in to continue");
+      window.location.href = "/signin";
       return;
     }
+    setUser(data.user);
+  };
 
-    const res = await fetch(`/api/blocks/${id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-      },
-    });
-
-    if (res.ok) {
-      setBlocks((prev) => prev.filter((block) => block._id !== id)); // ✅ remove from UI
-    } else {
-      const data = await res.json();
-      console.error("Delete failed:", data.error);
-    }
-  } catch (err) {
-    console.error("Error deleting block:", err);
-  }
-};
-
-
-  // ✅ Fetch study blocks with Supabase token
   const fetchBlocks = async () => {
     try {
+      setLoading(true);
+      setError(null);
+
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
-      if (!session?.access_token) {
-        console.warn("No session found, redirecting to signin...");
-        router.push("/signin");
-        return;
-      }
+      if (!session?.access_token) throw new Error("No valid session found");
 
       const res = await fetch("/api/blocks", {
         headers: {
-          Authorization: `Bearer ${session.access_token}`, // ✅ send JWT
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        setBlocks(data.blocks);
-      } else {
-        console.error("Failed to fetch blocks:", await res.json());
-      }
-    } catch (err) {
-      console.error("Error fetching blocks:", err);
+      if (!res.ok) throw new Error("Failed to fetch blocks");
+
+      const data = await res.json();
+      setBlocks(data.blocks || []);
+    } catch (err: any) {
+      setError(err.message || "Failed to load blocks");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchBlocks();
-  }, []);
+  const handleDelete = async (blockId: string) => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-  // ✅ Logout
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/signin");
+    if (!session?.access_token) return;
+
+    try {
+      const res = await fetch(`/api/blocks/${blockId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Delete failed");
+
+      setBlocks((prev) => prev.filter((b) => b._id !== blockId));
+    } catch (err) {
+      console.error(err);
+      setError("Failed to delete block");
+    }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/signin";
+  };
+
+  const totalHours = blocks.reduce((acc, block) => {
+    const duration =
+      (new Date(block.endTime).getTime() - new Date(block.startTime).getTime()) /
+      (1000 * 60 * 60);
+    return acc + duration;
+  }, 0);
+
+  const completedBlocks = blocks.filter((b) => new Date(b.endTime) < new Date()).length;
+  const upcomingBlocks = blocks.filter((b) => new Date(b.startTime) > new Date()).length;
+
   return (
-    <div className="min-h-screen w-full bg-[#020617] relative">
-      {/* Cyan Radial Glow Background */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundImage: `radial-gradient(circle 600px at 50% 100px, rgba(6,182,212,0.4), transparent)`,
-        }}
-      />
-
+    <div className="min-h-screen w-full bg-[#020617] relative overflow-hidden">
       {/* Header */}
-      <header className="relative z-10 flex justify-between items-center px-6 py-4 border-b border-white/10">
-        <h1 className="text-2xl font-bold text-cyan-300">QuietHours</h1>
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition"
-        >
-          Logout
-        </button>
-      </header>
-
-      {/* Main Content */}
-      <main className="relative z-10 px-4 py-10 flex flex-col items-center">
-        <h2 className="text-3xl font-bold text-white mb-6">
-          📚 Your Study Blocks
-        </h2>
-
-        {loading && (
-          <p className="text-white/70 text-center">Loading your blocks...</p>
-        )}
-
-        {/* Empty State */}
-        {!loading && blocks.length === 0 && (
-          <div className="text-center mt-16">
-            <p className="text-white/70 mb-4 text-lg">
-              📭 No study blocks yet.
-            </p>
+      <header className="relative z-10 backdrop-blur-sm bg-black/20 border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-full border border-cyan-400 bg-cyan-500/10">
+              <BookOpen className="h-6 w-6 text-cyan-400" />
+            </div>
+            <span className="text-xl font-bold text-cyan-400">QuietHours</span>
+          </div>
+          <div className="flex items-center gap-3">
+            {user && <span className="text-gray-400 text-sm">{user.email}</span>}
             <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-md transition"
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-2 rounded-lg"
             >
-              + Create Block
+              <LogOut className="h-4 w-4" /> Logout
             </button>
           </div>
+        </div>
+      </header>
+
+      {/* Main */}
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <h1 className="text-4xl font-bold text-white mb-6">Welcome back 👋</h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <StatsCard icon={<BookOpen />} label="Total Blocks" value={blocks.length} />
+          <StatsCard
+            icon={<Clock />}
+            label="Study Hours"
+            value={`${totalHours.toFixed(1)}h`}
+            color="green"
+          />
+          <StatsCard
+            icon={<CheckCircle2 />}
+            label="Completed"
+            value={completedBlocks}
+            color="purple"
+          />
+          <StatsCard icon={<AlertCircle />} label="Upcoming" value={upcomingBlocks} color="yellow" />
+        </div>
+
+        {loading && <p className="text-cyan-400">Loading blocks...</p>}
+
+        {!loading && blocks.length === 0 && (
+          <p className="text-gray-400">No study blocks yet. Create your first one!</p>
         )}
 
-        {/* Blocks List */}
         {!loading && blocks.length > 0 && (
-          <div className="w-full max-w-2xl">
-            <div className="flex justify-end mb-6">
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-md transition"
-              >
-                + Create Block
-              </button>
-            </div>
-
-            <ul className="space-y-4">
-              {blocks.map((block) => (
-                <li
-                  key={block._id}
-                  className="p-4 bg-white/10 border border-white/20 rounded-lg shadow flex justify-between items-center"
-                >
-                  <div>
-                    <p className="text-sm text-white">
-                      <span className="font-semibold text-cyan-300">
-                        Start:
-                      </span>{" "}
-                      {new Date(block.startTime).toLocaleString()}
-                    </p>
-                    <p className="text-sm text-white">
-                      <span className="font-semibold text-cyan-300">End:</span>{" "}
-                      {new Date(block.endTime).toLocaleString()}
-                    </p>
-                  </div>
-                  <span
-                    className={`px-3 py-1 text-xs font-medium rounded-full ${
-                      block.reminderSent
-                        ? "bg-green-500/20 text-green-300 border border-green-300/30"
-                        : "bg-yellow-500/20 text-yellow-300 border border-yellow-300/30"
-                    }`}
-                  >
-                    {block.reminderSent ? "Reminder Sent" : "Scheduled"}
-                  </span>
-
-                  {/* ✅ Delete Button */}
-                  <button
-                    onClick={() => handleDelete(block._id)}
-                    className="text-red-400 hover:text-red-600 text-sm"
-                  >
-                    ✕
-                  </button>
-                </li>
-              ))}
-            </ul>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {blocks.map((b) => (
+              <StudyBlockCard key={b._id} block={b} onDelete={handleDelete} />
+            ))}
           </div>
         )}
       </main>
-
-      {/* ✅ Modal for creating block */}
-      <CreateBlockModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onCreated={fetchBlocks}
-      />
     </div>
   );
 }

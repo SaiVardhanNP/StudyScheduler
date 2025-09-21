@@ -17,12 +17,11 @@ import {
   Bell,
   LineChart,
   Gift,
-} from "lucide-react"; // ✅ Lucide icons
+} from "lucide-react"; 
 
 export default function LandingPage() {
   const router = useRouter();
 
-  // Scroll to learn-more section
   const scrollToLearnMore = () => {
     const el = document.getElementById("learn-more");
     if (el) {
@@ -40,7 +39,6 @@ export default function LandingPage() {
         }}
       />
 
-      {/* 🔹 Content Wrapper */}
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Header */}
         <header className="w-full px-8 py-4 flex items-center justify-between bg-transparent">
@@ -62,9 +60,12 @@ export default function LandingPage() {
 
         {/* Hero Section */}
         <section className="flex flex-col items-center text-center py-20 px-6">
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight max-w-3xl">
-            Focus Better, <span className="text-cyan-400">Distract Less</span>
-          </h1>
+          <h1 className="text-5xl md:text-7xl font-black tracking-tight max-w-5xl leading-tight">
+              Turn Study Time Into
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
+                Success Time
+              </span>
+            </h1>
           <p className="text-lg text-gray-300 mt-6 max-w-2xl">
             QuietHours helps you schedule study sessions, block distractions,
             and stay productive — effortlessly.

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import CreateBlockModal from "@/components/CreateBlockModal"; // ✅ import modal
 
 type StudyBlock = {
   _id: string;
@@ -15,7 +16,9 @@ export default function DashboardPage() {
   const router = useRouter();
   const [blocks, setBlocks] = useState<StudyBlock[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // ✅ Check user session
   useEffect(() => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getSession();
@@ -26,24 +29,26 @@ export default function DashboardPage() {
     checkUser();
   }, [router]);
 
-  useEffect(() => {
-    const fetchBlocks = async () => {
-      try {
-        const res = await fetch("/api/blocks");
-        if (res.ok) {
-          const data = await res.json();
-          setBlocks(data.blocks);
-        }
-      } catch (err) {
-        console.error("Failed to fetch blocks:", err);
-      } finally {
-        setLoading(false);
+  // ✅ Fetch study blocks
+  const fetchBlocks = async () => {
+    try {
+      const res = await fetch("/api/blocks");
+      if (res.ok) {
+        const data = await res.json();
+        setBlocks(data.blocks);
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch blocks:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchBlocks();
   }, []);
 
+  // ✅ Logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/signin");
@@ -78,11 +83,12 @@ export default function DashboardPage() {
           <p className="text-white/70 text-center">Loading your blocks...</p>
         )}
 
+        {/* Empty State */}
         {!loading && blocks.length === 0 && (
           <div className="text-center mt-16">
             <p className="text-white/70 mb-4 text-lg">📭 No study blocks yet.</p>
             <button
-              onClick={() => router.push("/create-block")}
+              onClick={() => setIsModalOpen(true)}
               className="bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-md transition"
             >
               + Create Block
@@ -90,11 +96,12 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Blocks List */}
         {!loading && blocks.length > 0 && (
           <div className="w-full max-w-2xl">
             <div className="flex justify-end mb-6">
               <button
-                onClick={() => router.push("/create-block")}
+                onClick={() => setIsModalOpen(true)}
                 className="bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-md transition"
               >
                 + Create Block
@@ -132,6 +139,13 @@ export default function DashboardPage() {
           </div>
         )}
       </main>
+
+      {/* ✅ Modal for creating block */}
+      <CreateBlockModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onCreated={fetchBlocks}
+      />
     </div>
   );
 }

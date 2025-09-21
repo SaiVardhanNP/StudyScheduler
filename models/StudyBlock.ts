@@ -12,6 +12,7 @@ const StudyBlockSchema = new mongoose.Schema(
       enum: [
         "Mathematics",
         "Physics",
+        "Computer Science",
         "Literature",
         "Chemistry",
         "Biology",
@@ -30,15 +31,13 @@ const StudyBlockSchema = new mongoose.Schema(
     endTime: { type: Date, required: true },
     reminderSent: { type: Boolean, default: false, index: true },
   },
-  { timestamps: true } // ✅ handles createdAt/updatedAt
+  { timestamps: true } 
 );
 
-// Compound indexes
 StudyBlockSchema.index({ userId: 1, startTime: 1 });
 StudyBlockSchema.index({ startTime: 1, reminderSent: 1 });
 StudyBlockSchema.index({ userId: 1, createdAt: -1 });
 
-// Validation middleware
 StudyBlockSchema.pre("save", function (next) {
   if (this.endTime <= this.startTime) {
     return next(new Error("End time must be after start time"));
@@ -60,7 +59,6 @@ StudyBlockSchema.pre("save", function (next) {
   next();
 });
 
-// Instance methods
 StudyBlockSchema.methods.isActive = function () {
   const now = new Date();
   return now >= this.startTime && now <= this.endTime;
@@ -74,7 +72,6 @@ StudyBlockSchema.methods.getDurationMinutes = function () {
   return Math.round((this.endTime - this.startTime) / (1000 * 60));
 };
 
-// Static methods
 StudyBlockSchema.statics.findOverlapping = function (
   userId,
   startTime,

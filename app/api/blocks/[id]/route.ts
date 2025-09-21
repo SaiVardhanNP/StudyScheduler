@@ -175,44 +175,56 @@ export async function DELETE(
 ) {
   try {
     await connectDB();
+
     const auth = await authenticateUser(request);
     if ("error" in auth) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
-    const user = auth.user;
 
+    const userId = auth.user.id;
     const block = await StudyBlock.findOne({
       _id: params.id,
-      userId: user.id,
-    }).lean<BlockLean>();
+      userId,
+    });
 
     if (!block) {
-      return NextResponse.json({ error: "Study block not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Study block not found" },
+        { status: 404 }
+      );
     }
 
     const now = new Date();
     const start = new Date(block.startTime);
     const end = new Date(block.endTime);
 
-    if (now >= start && now <= end) {
+    const isActive = now >= start && now <= end;
+    const isPast = end < now;
+
+    if (isActive) {
       return NextResponse.json(
-        { error: "Cannot delete an active study block. Please wait until it ends." },
+        {
+          error:
+            "Cannot delete an active study block. Please wait until it ends.",
+        },
         { status: 400 }
       );
     }
 
-    const isPastBlock = end < now;
     await StudyBlock.findByIdAndDelete(params.id);
 
     return NextResponse.json({
       success: true,
       id: params.id,
-      message: isPastBlock
+      message: isPast
         ? "Completed study block deleted successfully"
-        : "Study block deleted successfully",
+        : "Upcoming study block deleted successfully",
     });
-  } catch (error) {
-    console.error("DELETE /api/blocks/[id] error:", error);
-    return NextResponse.json({ error: "Failed to delete study block" }, { status: 500 });
+  } catch (err) {
+    console.error("DELETE /api/blocks/[id] error:", err);
+    return NextResponse.json(
+      { error: "Failed to delete study block" },
+      { status: 500 }
+    );
   }
 }

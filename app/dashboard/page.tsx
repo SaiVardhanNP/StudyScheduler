@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import CreateBlockModal from "@/components/CreateBlockModal"; // ✅ import modal
+import CreateBlockModal from "@/components/CreateBlockModal";
 
 type StudyBlock = {
   _id: string;
@@ -29,16 +29,63 @@ export default function DashboardPage() {
     checkUser();
   }, [router]);
 
-  // ✅ Fetch study blocks
+  const handleDelete = async (id: string) => {
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      router.push("/signin");
+      return;
+    }
+
+    const res = await fetch(`/api/blocks/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (res.ok) {
+      setBlocks((prev) => prev.filter((block) => block._id !== id)); // ✅ remove from UI
+    } else {
+      const data = await res.json();
+      console.error("Delete failed:", data.error);
+    }
+  } catch (err) {
+    console.error("Error deleting block:", err);
+  }
+};
+
+
+  // ✅ Fetch study blocks with Supabase token
   const fetchBlocks = async () => {
     try {
-      const res = await fetch("/api/blocks");
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        console.warn("No session found, redirecting to signin...");
+        router.push("/signin");
+        return;
+      }
+
+      const res = await fetch("/api/blocks", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`, // ✅ send JWT
+        },
+      });
+
       if (res.ok) {
         const data = await res.json();
         setBlocks(data.blocks);
+      } else {
+        console.error("Failed to fetch blocks:", await res.json());
       }
     } catch (err) {
-      console.error("Failed to fetch blocks:", err);
+      console.error("Error fetching blocks:", err);
     } finally {
       setLoading(false);
     }
@@ -77,7 +124,9 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="relative z-10 px-4 py-10 flex flex-col items-center">
-        <h2 className="text-3xl font-bold text-white mb-6">📚 Your Study Blocks</h2>
+        <h2 className="text-3xl font-bold text-white mb-6">
+          📚 Your Study Blocks
+        </h2>
 
         {loading && (
           <p className="text-white/70 text-center">Loading your blocks...</p>
@@ -86,7 +135,9 @@ export default function DashboardPage() {
         {/* Empty State */}
         {!loading && blocks.length === 0 && (
           <div className="text-center mt-16">
-            <p className="text-white/70 mb-4 text-lg">📭 No study blocks yet.</p>
+            <p className="text-white/70 mb-4 text-lg">
+              📭 No study blocks yet.
+            </p>
             <button
               onClick={() => setIsModalOpen(true)}
               className="bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-md transition"
@@ -116,7 +167,9 @@ export default function DashboardPage() {
                 >
                   <div>
                     <p className="text-sm text-white">
-                      <span className="font-semibold text-cyan-300">Start:</span>{" "}
+                      <span className="font-semibold text-cyan-300">
+                        Start:
+                      </span>{" "}
                       {new Date(block.startTime).toLocaleString()}
                     </p>
                     <p className="text-sm text-white">
@@ -133,6 +186,14 @@ export default function DashboardPage() {
                   >
                     {block.reminderSent ? "Reminder Sent" : "Scheduled"}
                   </span>
+
+                  {/* ✅ Delete Button */}
+                  <button
+                    onClick={() => handleDelete(block._id)}
+                    className="text-red-400 hover:text-red-600 text-sm"
+                  >
+                    ✕
+                  </button>
                 </li>
               ))}
             </ul>

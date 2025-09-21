@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CalendarDays, Save, XCircle } from "lucide-react";
+import { supabase } from "@/lib/supabase"; // ✅ import supabase client
 
 type CreateBlockModalProps = {
   isOpen: boolean;
@@ -27,9 +28,24 @@ export default function CreateBlockModal({
     setLoading(true);
 
     try {
+      // ✅ Get Supabase session token
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        setError("Not authenticated. Please log in again.");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Call API with Authorization header
       const res = await fetch("/api/blocks", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ startTime, endTime }),
       });
 
@@ -38,8 +54,10 @@ export default function CreateBlockModal({
       if (!res.ok) {
         setError(data.error || "Failed to create block");
       } else {
-        onCreated();
-        onClose();
+        onCreated(); // refresh blocks in dashboard
+        onClose();   // close modal
+        setStartTime(""); // reset fields
+        setEndTime("");
       }
     } catch (err) {
       setError("Something went wrong");
@@ -70,6 +88,7 @@ export default function CreateBlockModal({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Start Time */}
           <div>
             <label className="block text-sm text-white/70 mb-1">Start Time</label>
             <div className="flex items-center bg-white/10 border border-white/20 rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-cyan-400">
@@ -84,6 +103,7 @@ export default function CreateBlockModal({
             </div>
           </div>
 
+          {/* End Time */}
           <div>
             <label className="block text-sm text-white/70 mb-1">End Time</label>
             <div className="flex items-center bg-white/10 border border-white/20 rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-cyan-400">
@@ -98,6 +118,7 @@ export default function CreateBlockModal({
             </div>
           </div>
 
+          {/* Buttons */}
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"

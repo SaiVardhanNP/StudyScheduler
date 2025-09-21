@@ -1,18 +1,20 @@
+"use client";
+
 import { useState } from "react";
-import supabase from "@/app/_lib/supabase";
-import { useRouter } from "next/router";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
-    setError("");
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -23,41 +25,58 @@ export default function SignupPage() {
 
     if (error) {
       setError(error.message);
-    } else {
+      return;
+    }
+
+    if (data.user) {
       router.push("/dashboard");
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
+    <div className="min-h-screen w-full bg-[#020617] relative flex items-center justify-center">
+      {/* Cyan Radial Glow Background */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: `radial-gradient(circle 500px at 50% 100px, rgba(6,182,212,0.4), transparent)`,
+        }}
+      />
+
+      {/* Signup Form */}
       <form
         onSubmit={handleSignup}
-        className="bg-white p-6 rounded shadow-md w-96"
+        className="relative z-10 bg-white/5 backdrop-blur-md border border-cyan-400/30 p-6 sm:p-8 rounded-xl shadow-lg w-[90%] max-w-md text-white"
       >
-        <h2 className="text-2xl font-bold mb-4">Sign Up</h2>
-        {error && <p className="text-red-500 mb-2">{error}</p>}
+        <h1 className="text-3xl font-bold mb-6 text-center text-cyan-300">Sign Up</h1>
 
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full p-2 border mb-3 rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        {error && (
+          <p className="text-red-400 mb-4 text-sm text-center">{error}</p>
+        )}
 
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full p-2 border mb-3 rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <div className="space-y-4">
+          <input
+            type="email"
+            placeholder="Email"
+            className="w-full px-4 py-2 rounded-md bg-white/10 border border-white/20 placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            className="w-full px-4 py-2 rounded-md bg-white/10 border border-white/20 placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
 
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded"
+          className="mt-6 w-full bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-2 rounded-md transition disabled:opacity-50"
           disabled={loading}
         >
           {loading ? "Signing up..." : "Sign Up"}
